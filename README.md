@@ -47,7 +47,7 @@ Then run the install command below in that session. This is a [Claude Code platf
 <details>
 <summary><strong>⚠️ Windows users: Click here if setup says no JavaScript runtime was found</strong></summary>
 
-If setup says no JavaScript runtime was found on Windows, install one for your shell first. The simplest fallback is Node.js LTS:
+On Windows, Node.js LTS is the recommended runtime for Claude HUD. If setup says no JavaScript runtime was found, install Node.js for your shell first:
 ```powershell
 winget install OpenJS.NodeJS.LTS
 ```
