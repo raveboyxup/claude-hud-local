@@ -7,6 +7,15 @@ export type LineLayoutType = 'compact' | 'expanded';
 
 export type AutocompactBufferMode = 'enabled' | 'disabled';
 export type ContextValueMode = 'percent' | 'tokens' | 'remaining' | 'both';
+
+/**
+ * Controls how the model name is displayed in the HUD badge.
+ *
+ *   full:    Show the raw display name as-is (e.g. "Opus 4.6 (1M context)")
+ *   compact: Strip redundant context-window suffix (e.g. "Opus 4.6")
+ *   short:   Strip context suffix AND "Claude " prefix (e.g. "Opus 4.6")
+ */
+export type ModelFormatMode = 'full' | 'compact' | 'short';
 export type HudElement = 'project' | 'context' | 'usage' | 'memory' | 'environment' | 'tools' | 'agents' | 'todos';
 export type HudColorName =
   | 'dim'
@@ -80,6 +89,8 @@ export interface HudConfig {
     usageThreshold: number;
     sevenDayThreshold: number;
     environmentThreshold: number;
+    modelFormat: ModelFormatMode;
+    modelOverride: string;
     customLine: string;
   };
   colors: HudColorOverrides;
@@ -117,6 +128,8 @@ export const DEFAULT_CONFIG: HudConfig = {
     usageThreshold: 0,
     sevenDayThreshold: 80,
     environmentThreshold: 0,
+    modelFormat: 'full',
+    modelOverride: '',
     customLine: '',
   },
   colors: {
@@ -153,6 +166,10 @@ function validateAutocompactBuffer(value: unknown): value is AutocompactBufferMo
 
 function validateContextValue(value: unknown): value is ContextValueMode {
   return value === 'percent' || value === 'tokens' || value === 'remaining' || value === 'both';
+}
+
+function validateModelFormat(value: unknown): value is ModelFormatMode {
+  return value === 'full' || value === 'compact' || value === 'short';
 }
 
 function validateColorName(value: unknown): value is HudColorName {
@@ -322,6 +339,12 @@ export function mergeConfig(userConfig: Partial<HudConfig>): HudConfig {
     usageThreshold: validateThreshold(migrated.display?.usageThreshold, 100),
     sevenDayThreshold: validateThreshold(migrated.display?.sevenDayThreshold, 100),
     environmentThreshold: validateThreshold(migrated.display?.environmentThreshold, 100),
+    modelFormat: validateModelFormat(migrated.display?.modelFormat)
+      ? migrated.display.modelFormat
+      : DEFAULT_CONFIG.display.modelFormat,
+    modelOverride: typeof migrated.display?.modelOverride === 'string'
+      ? migrated.display.modelOverride.slice(0, 80)
+      : DEFAULT_CONFIG.display.modelOverride,
     customLine: typeof migrated.display?.customLine === 'string'
       ? migrated.display.customLine.slice(0, 80)
       : DEFAULT_CONFIG.display.customLine,
