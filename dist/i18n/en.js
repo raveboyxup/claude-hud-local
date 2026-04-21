@@ -21,6 +21,8 @@ export const en = {
     "format.cache": "cache",
     "format.out": "out",
     "format.tokPerSec": "tok/s",
+    // Local model
+    "local.available": "(local)",
     // Init
     "init.initializing": "[claude-hud] Initializing...",
     "init.macosNote": "[claude-hud] Note: On macOS, you may need to restart Claude Code for the HUD to appear.",

@@ -26,6 +26,9 @@ export const zh: Messages = {
   "format.out": "输出",
   "format.tokPerSec": "tok/s",
 
+  // Local model
+  "local.available": "(本地)",
+
   // Init
   "init.initializing": "[claude-hud] 正在初始化...",
   "init.macosNote":

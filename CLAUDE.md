@@ -4,16 +4,37 @@ This file provides guidance to Claude Code when working with this repository.
 
 ## Project Overview
 
-Claude HUD is a Claude Code plugin that displays a real-time multi-line statusline. It shows context health, tool activity, agent status, and todo progress.
+**Claude HUD** is a Claude Code plugin that displays a real-time multi-line statusline (HUD) showing:
+- Current model and project context
+- Context window usage (token utilization)
+- Rate limit status (5-hour, 7-day)
+- Active tools, agents, and todo items
+- Git branch status
+- Optional: memory usage, effort level, session duration
 
 ## Build Commands
 
 ```bash
-npm ci               # Install dependencies
-npm run build        # Build TypeScript to dist/
+# Install dependencies
+npm ci
 
-# Test with sample stdin data
-echo '{"model":{"display_name":"Opus"},"context_window":{"current_usage":{"input_tokens":45000},"context_window_size":200000}}' | node dist/index.js
+# Build TypeScript to dist/
+npm run build
+
+# Watch mode for development
+npm run dev
+
+# Run all tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Update snapshot tests
+npm run test:update-snapshots
+
+# Test with sample stdin data (manual verification)
+echo '{"model":{"display_name":"Opus"},"context_window":{"current_usage":{"input_tokens":45000},"context_window_size":200000},"transcript_path":"/tmp/test.jsonl"}' | node dist/index.js
 ```
 
 ## Architecture

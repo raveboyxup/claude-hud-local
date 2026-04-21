@@ -99,6 +99,10 @@ export interface TranscriptData {
     lastAssistantResponseAt?: Date;
     sessionTokens?: SessionTokenUsage;
 }
+export interface LocalModelInfo {
+    name: string;
+    contextWindow: number;
+}
 export interface RenderContext {
     stdin: StdinData;
     transcript: TranscriptData;
@@ -116,5 +120,6 @@ export interface RenderContext {
     claudeCodeVersion?: string;
     effortLevel?: string;
     effortSymbol?: string;
+    localModelInfo?: LocalModelInfo | null;
 }
 //# sourceMappingURL=types.d.ts.map

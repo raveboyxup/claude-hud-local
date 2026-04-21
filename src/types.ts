@@ -114,6 +114,11 @@ export interface TranscriptData {
   sessionTokens?: SessionTokenUsage;
 }
 
+export interface LocalModelInfo {
+  name: string;
+  contextWindow: number;
+}
+
 export interface RenderContext {
   stdin: StdinData;
   transcript: TranscriptData;
@@ -131,4 +136,5 @@ export interface RenderContext {
   claudeCodeVersion?: string;
   effortLevel?: string;
   effortSymbol?: string;
+  localModelInfo?: LocalModelInfo | null;
 }

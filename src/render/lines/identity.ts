@@ -16,8 +16,8 @@ export function renderIdentityLine(
   ctx: RenderContext,
   alignLabels = false,
 ): string {
-  const rawPercent = getContextPercent(ctx.stdin);
-  const bufferedPercent = getBufferedPercent(ctx.stdin);
+  const rawPercent = getContextPercent(ctx.stdin, ctx.localModelInfo);
+  const bufferedPercent = getBufferedPercent(ctx.stdin, ctx.localModelInfo);
   const autocompactMode = ctx.config?.display?.autocompactBuffer ?? "enabled";
   const percent = autocompactMode === "disabled" ? rawPercent : bufferedPercent;
   const colors = ctx.config?.colors;
@@ -72,7 +72,11 @@ function formatContextValue(
   mode: "percent" | "tokens" | "remaining" | "both",
 ): string {
   const totalTokens = getTotalTokens(ctx.stdin);
-  const size = ctx.stdin.context_window?.context_window_size ?? 0;
+  let size = ctx.stdin.context_window?.context_window_size;
+  const hasLocalModel = !!(ctx.localModelInfo && ctx.localModelInfo.contextWindow);
+  if (!size || size <= 0) {
+    size = ctx.localModelInfo?.contextWindow ?? 0;
+  }
 
   if (mode === "tokens") {
     if (size > 0) {
@@ -90,6 +94,11 @@ function formatContextValue(
 
   if (mode === "remaining") {
     return `${Math.max(0, 100 - percent)}%`;
+  }
+
+  // For percent mode with local model but no token tracking, show available capacity
+  if (hasLocalModel && !ctx.stdin.context_window?.context_window_size) {
+    return `${formatTokens(size)} ${t("local.available")}`;
   }
 
   return `${percent}%`;

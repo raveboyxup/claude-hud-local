@@ -1,4 +1,4 @@
-import type { StdinData, UsageData } from './types.js';
+import type { StdinData, UsageData, LocalModelInfo } from './types.js';
 import type { ModelFormatMode } from './config.js';
 import { AUTOCOMPACT_BUFFER_PERCENT } from './constants.js';
 
@@ -158,7 +158,10 @@ function getNativePercent(stdin: StdinData): number | null {
   return null;
 }
 
-export function getContextPercent(stdin: StdinData): number {
+export function getContextPercent(
+  stdin: StdinData,
+  localModelInfo?: LocalModelInfo | null,
+): number {
   // Prefer native percentage (v2.1.6+) - accurate and matches /context
   const native = getNativePercent(stdin);
   if (native !== null) {
@@ -166,7 +169,11 @@ export function getContextPercent(stdin: StdinData): number {
   }
 
   // Fallback: manual calculation without buffer
-  const size = stdin.context_window?.context_window_size;
+  let size = stdin.context_window?.context_window_size;
+  if (!size || size <= 0) {
+    // Use local model context window as fallback for local API setups
+    size = localModelInfo?.contextWindow;
+  }
   if (!size || size <= 0) {
     return 0;
   }
@@ -175,7 +182,10 @@ export function getContextPercent(stdin: StdinData): number {
   return Math.min(100, Math.round((totalTokens / size) * 100));
 }
 
-export function getBufferedPercent(stdin: StdinData): number {
+export function getBufferedPercent(
+  stdin: StdinData,
+  localModelInfo?: LocalModelInfo | null,
+): number {
   // Prefer native percentage (v2.1.6+) so the HUD matches Claude Code's
   // own context output. The buffered fallback only approximates older versions.
   const native = getNativePercent(stdin);
@@ -184,7 +194,11 @@ export function getBufferedPercent(stdin: StdinData): number {
   }
 
   // Fallback: manual calculation with buffer for older Claude Code versions
-  const size = stdin.context_window?.context_window_size;
+  let size = stdin.context_window?.context_window_size;
+  if (!size || size <= 0) {
+    // Use local model context window as fallback for local API setups
+    size = localModelInfo?.contextWindow;
+  }
   if (!size || size <= 0) {
     return 0;
   }

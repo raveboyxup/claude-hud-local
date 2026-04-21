@@ -12,6 +12,7 @@ import { applyContextWindowFallback } from "./context-cache.js";
 import { getUsageFromExternalSnapshot } from "./external-usage.js";
 import { setLanguage, t } from "./i18n/index.js";
 import type { RenderContext } from "./types.js";
+import { fetchLocalModelInfo } from "./local-model.js";
 
 export { getUsageFromExternalSnapshot } from "./external-usage.js";
 import { fileURLToPath } from "node:url";
@@ -30,6 +31,7 @@ export type MainDeps = {
   getClaudeCodeVersion: typeof getClaudeCodeVersion;
   getMemoryUsage: typeof getMemoryUsage;
   applyContextWindowFallback: typeof applyContextWindowFallback;
+  fetchLocalModelInfo: typeof fetchLocalModelInfo;
   render: typeof render;
   now: () => number;
   log: (...args: unknown[]) => void;
@@ -49,6 +51,7 @@ export async function main(overrides: Partial<MainDeps> = {}): Promise<void> {
     getClaudeCodeVersion,
     getMemoryUsage,
     applyContextWindowFallback,
+    fetchLocalModelInfo,
     render,
     now: () => Date.now(),
     log: console.log,
@@ -110,6 +113,9 @@ export async function main(overrides: Partial<MainDeps> = {}): Promise<void> {
         ? await deps.getMemoryUsage()
         : null;
 
+    // Fetch local model context window size for local API setups
+    const localModelInfo = await deps.fetchLocalModelInfo();
+
     const ctx: RenderContext = {
       stdin,
       transcript,
@@ -127,6 +133,7 @@ export async function main(overrides: Partial<MainDeps> = {}): Promise<void> {
       claudeCodeVersion,
       effortLevel: effortInfo?.level,
       effortSymbol: effortInfo?.symbol,
+      localModelInfo,
     };
 
     deps.render(ctx);

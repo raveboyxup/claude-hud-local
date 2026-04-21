@@ -122,21 +122,25 @@ function getNativePercent(stdin) {
     }
     return null;
 }
-export function getContextPercent(stdin) {
+export function getContextPercent(stdin, localModelInfo) {
     // Prefer native percentage (v2.1.6+) - accurate and matches /context
     const native = getNativePercent(stdin);
     if (native !== null) {
         return native;
     }
     // Fallback: manual calculation without buffer
-    const size = stdin.context_window?.context_window_size;
+    let size = stdin.context_window?.context_window_size;
+    if (!size || size <= 0) {
+        // Use local model context window as fallback for local API setups
+        size = localModelInfo?.contextWindow;
+    }
     if (!size || size <= 0) {
         return 0;
     }
     const totalTokens = getTotalTokens(stdin);
     return Math.min(100, Math.round((totalTokens / size) * 100));
 }
-export function getBufferedPercent(stdin) {
+export function getBufferedPercent(stdin, localModelInfo) {
     // Prefer native percentage (v2.1.6+) so the HUD matches Claude Code's
     // own context output. The buffered fallback only approximates older versions.
     const native = getNativePercent(stdin);
@@ -144,7 +148,11 @@ export function getBufferedPercent(stdin) {
         return native;
     }
     // Fallback: manual calculation with buffer for older Claude Code versions
-    const size = stdin.context_window?.context_window_size;
+    let size = stdin.context_window?.context_window_size;
+    if (!size || size <= 0) {
+        // Use local model context window as fallback for local API setups
+        size = localModelInfo?.contextWindow;
+    }
     if (!size || size <= 0) {
         return 0;
     }

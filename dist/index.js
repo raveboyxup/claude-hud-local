@@ -11,6 +11,7 @@ import { resolveEffortLevel } from "./effort.js";
 import { applyContextWindowFallback } from "./context-cache.js";
 import { getUsageFromExternalSnapshot } from "./external-usage.js";
 import { setLanguage, t } from "./i18n/index.js";
+import { fetchLocalModelInfo } from "./local-model.js";
 export { getUsageFromExternalSnapshot } from "./external-usage.js";
 import { fileURLToPath } from "node:url";
 import { realpathSync } from "node:fs";
@@ -28,6 +29,7 @@ export async function main(overrides = {}) {
         getClaudeCodeVersion,
         getMemoryUsage,
         applyContextWindowFallback,
+        fetchLocalModelInfo,
         render,
         now: () => Date.now(),
         log: console.log,
@@ -74,6 +76,8 @@ export async function main(overrides = {}) {
         const memoryUsage = config.display.showMemoryUsage && config.lineLayout === "expanded"
             ? await deps.getMemoryUsage()
             : null;
+        // Fetch local model context window size for local API setups
+        const localModelInfo = await deps.fetchLocalModelInfo();
         const ctx = {
             stdin,
             transcript,
@@ -91,6 +95,7 @@ export async function main(overrides = {}) {
             claudeCodeVersion,
             effortLevel: effortInfo?.level,
             effortSymbol: effortInfo?.symbol,
+            localModelInfo,
         };
         deps.render(ctx);
     }

@@ -26,6 +26,9 @@ export const en: Messages = {
   "format.out": "out",
   "format.tokPerSec": "tok/s",
 
+  // Local model
+  "local.available": "(local)",
+
   // Init
   "init.initializing": "[claude-hud] Initializing...",
   "init.macosNote":

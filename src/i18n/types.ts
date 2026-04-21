@@ -21,6 +21,8 @@ export type MessageKey =
   | "format.cache"
   | "format.out"
   | "format.tokPerSec"
+  // Local model
+  | "local.available"
   // Init
   | "init.initializing"
   | "init.macosNote";
