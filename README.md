@@ -1,78 +1,14 @@
-# Claude HUD
+# Claude HUD (Local)
 
-A Claude Code plugin that shows what's happening — context usage, active tools, running agents, and todo progress. Always visible below your input.
+A Claude Code plugin that displays a real-time multi-line statusline — context usage, active tools, running agents, and todo progress. Always visible below your input.
 
-[![License](https://img.shields.io/github/license/jarrodwatts/claude-hud?v=2)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/jarrodwatts/claude-hud)](https://github.com/jarrodwatts/claude-hud/stargazers)
+Supports both Claude Code subscriber sessions and **local model setups** (Ollama, LMStudio, vLLM, etc.) via OpenAI-compatible APIs.
 
 ![Claude HUD in action](claude-hud-preview-5-2.png)
 
 > 🌐 English | [中文文档](README.zh.md)
 
-## Install
-
-Inside a Claude Code instance, run the following commands:
-
-**Step 1: Add the marketplace**
-```
-/plugin marketplace add jarrodwatts/claude-hud
-```
-
-**Step 2: Install the plugin**
-
-<details>
-<summary><strong>⚠️ Linux users: Click here first</strong></summary>
-
-On Linux, `/tmp` is often a separate filesystem (tmpfs), which causes plugin installation to fail with:
-```
-EXDEV: cross-device link not permitted
-```
-
-**Fix**: Set TMPDIR before installing:
-```bash
-mkdir -p ~/.cache/tmp && TMPDIR=~/.cache/tmp claude
-```
-
-Then run the install command below in that session. This is a [Claude Code platform limitation](https://github.com/anthropics/claude-code/issues/14799).
-
-</details>
-
-```
-/plugin install claude-hud
-```
-
-After that, reload plugins:
-
-```
-/reload-plugins
-```
-
-
-**Step 3: Configure the statusline**
-```
-/claude-hud:setup
-```
-
-<details>
-<summary><strong>⚠️ Windows users: Click here if setup says no JavaScript runtime was found</strong></summary>
-
-On Windows, Node.js LTS is the supported runtime for Claude HUD setup. If setup says no JavaScript runtime was found, install Node.js for your shell first:
-```powershell
-winget install OpenJS.NodeJS.LTS
-```
-Then restart your shell and run `/claude-hud:setup` again.
-
-</details>
-
-Done! Restart Claude Code to load the new statusLine config, then the HUD will appear.
-
-On Windows, make that a full Claude Code restart after setup writes the new `statusLine` config.
-
----
-
-## What is Claude HUD?
-
-Claude HUD gives you better insights into what's happening in your Claude Code session.
+## Features
 
 | What You See | Why It Matters |
 |--------------|----------------|
@@ -81,6 +17,7 @@ Claude HUD gives you better insights into what's happening in your Claude Code s
 | **Tool activity** | Watch Claude read, edit, and search files as it happens |
 | **Agent tracking** | See which subagents are running and what they're doing |
 | **Todo progress** | Track task completion in real-time |
+| **Local model support** | Works with local APIs when Claude Code provides no native context data |
 
 ## What You See
 
@@ -90,13 +27,22 @@ Claude HUD gives you better insights into what's happening in your Claude Code s
 Context █████░░░░░ 45% │ Usage ██░░░░░░░░ 25% (1h 30m / 5h)
 ```
 - **Line 1** — Model, provider label when positively identified (for example `Bedrock`, `Vertex`), project path, git branch
-- **Line 2** — Context bar (green → yellow → red) and usage rate limits
+- **Line 2** — Context bar (green -> yellow -> red) and usage rate limits
+
+### Local Model Mode
+When using a local model API without Claude Code subscriber rate_limits:
+```
+[llama3.1] │ my-project git:(main*)
+Context █████░░░░░ 62% │ 128k (local)
+```
+- Shows `(local)` indicator when context is derived from local model API
+- Falls back to the model's context window size from your local API endpoint
 
 ### Optional lines (enable via `/claude-hud:configure`)
 ```
-◐ Edit: auth.ts | ✓ Read ×3 | ✓ Grep ×2        ← Tools activity
-◐ explore [haiku]: Finding auth code (2m 15s)    ← Agent status
-▸ Fix authentication bug (2/5)                   ← Todo progress
+◐ Edit: auth.ts | ✓ Read x3 | ✓ Grep x2        <- Tools activity
+◐ explore [haiku]: Finding auth code (2m 15s)    <- Agent status
+▸ Fix authentication bug (2/5)                   <- Todo progress
 ```
 
 ---
@@ -106,7 +52,7 @@ Context █████░░░░░ 45% │ Usage ██░░░░░░░
 Claude HUD uses Claude Code's native **statusline API** — no separate window, no tmux required, works in any terminal.
 
 ```
-Claude Code → stdin JSON → claude-hud → stdout → displayed in your terminal
+Claude Code -> stdin JSON -> claude-hud -> stdout -> displayed in your terminal
            ↘ transcript JSONL (tools, agents, todos)
 ```
 
@@ -115,6 +61,66 @@ Claude Code → stdin JSON → claude-hud → stdout → displayed in your termi
 - Scales with Claude Code's reported context window size, including newer 1M-context sessions
 - Parses the transcript for tool/agent activity
 - Updates every ~300ms
+- **Local model fallback** — when Claude Code doesn't provide `context_window_size`, uses your local API's model context window
+
+---
+
+## Local Model Configuration
+
+For local model setups (Ollama, LMStudio, vLLM, custom proxies), Claude HUD can query your local API to get model context window information.
+
+### How it works
+
+1. Claude HUD fetches `http://127.0.0.1:8086/v1/models` (default endpoint)
+2. Reads the first model's context window size from the response
+3. Uses that size as the denominator for context percentage calculations
+4. Shows `(local)` indicator in the context display
+
+### API Response Format
+
+Expects an OpenAI-compatible response:
+```json
+{
+  "data": [
+    {
+      "id": "llama3.1:8b",
+      "meta": {
+        "n_ctx_train": 131072
+      }
+    }
+  ]
+}
+```
+
+Or alternative field names:
+```json
+{
+  "models": [
+    {
+      "id": "llama3.1:8b",
+      "parameters": {
+        "n_ctx": 8192
+      }
+    }
+  ]
+}
+```
+
+### Configuration
+
+Set the local API endpoint in `~/.claude/plugins/claude-hud/config.json`:
+
+```json
+{
+  "display": {
+    "localApiUrl": "http://127.0.0.1:8086"
+  }
+}
+```
+
+Default: `http://127.0.0.1:8086`
+
+If the endpoint is unreachable or returns invalid data, Claude HUD falls back to normal behavior (hides context percentage if no native data available).
 
 ---
 
@@ -160,7 +166,6 @@ Chinese HUD labels are available as an explicit opt-in. English stays the defaul
 | `lineLayout` | string | `expanded` | Layout: `expanded` (multi-line) or `compact` (single line) |
 | `pathLevels` | 1-3 | 1 | Directory levels to show in project path |
 | `maxWidth` | number \| `null` | `null` | Optional fallback width used only when terminal width detection fails completely |
-<<<<<<< HEAD
 | `elementOrder` | string[] | `["project","context","usage","promptCache","memory","environment","tools","agents","todos"]` | Expanded-mode element order. Omit entries to hide them in expanded mode. |
 | `display.mergeGroups` | string[][] | `[["context","usage"]]` | Expanded-mode groups that should share a line when adjacent. Set `[]` to disable merged lines. |
 | `gitStatus.enabled` | boolean | true | Show git branch in HUD |
@@ -195,6 +200,7 @@ Chinese HUD labels are available as an explicit opt-in. English stays the defaul
 | `display.showMemoryUsage` | boolean | false | Show an approximate system RAM usage line in expanded layout |
 | `display.showPromptCache` | boolean | false | Show a prompt cache countdown based on the last assistant response timestamp in the transcript |
 | `display.promptCacheTtlSeconds` | number | `300` | Prompt cache TTL in seconds. Keep the default for Pro, set `3600` for Max |
+| `display.localApiUrl` | string | `"http://127.0.0.1:8086"` | Local model API endpoint for fetching context window info |
 | `colors.context` | color value | `green` | Base color for the context bar and context percentage |
 | `colors.usage` | color value | `brightBlue` | Base color for usage bars and percentages below warning thresholds |
 | `colors.warning` | color value | `yellow` | Warning color for context thresholds and usage warning text |
@@ -292,7 +298,8 @@ Example fallback snapshot:
     "showTodos": true,
     "showConfigCounts": true,
     "showDuration": true,
-    "showMemoryUsage": true
+    "showMemoryUsage": true,
+    "localApiUrl": "http://127.0.0.1:8086"
   },
   "colors": {
     "context": "cyan",
@@ -326,6 +333,11 @@ Example fallback snapshot:
 - `!` = modified files, `+` = added/staged, `✘` = deleted, `?` = untracked
 - Counts of 0 are omitted for cleaner display
 
+**Local model mode:** `[llama3.1] │ my-project git:(main*)`
+```
+Context █████░░░░░ 62% │ 128k (local)
+```
+
 ### Troubleshooting
 
 **Config not applying?**
@@ -345,6 +357,12 @@ Example fallback snapshot:
 - Restart Claude Code so it picks up the new statusLine config
 - On macOS, fully quit Claude Code and run `claude` again in your terminal
 
+**Local model not showing?**
+- Verify your local API is running and accessible at `display.localApiUrl`
+- Check the API returns an OpenAI-compatible `/v1/models` response
+- Ensure the first model in the list has a context window size (`n_ctx_train` or `n_ctx`)
+- Context percentage only appears when a valid context window size is available
+
 ---
 
 ## Requirements
@@ -358,8 +376,8 @@ Example fallback snapshot:
 ## Development
 
 ```bash
-git clone https://github.com/jarrodwatts/claude-hud
-cd claude-hud
+git clone https://github.com/raveboyxup/claude-hud-local
+cd claude-hud-local
 npm ci && npm run build
 npm test
 ```
@@ -371,9 +389,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 ## License
 
 MIT — see [LICENSE](LICENSE)
-
----
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=jarrodwatts/claude-hud&type=Date)](https://star-history.com/#jarrodwatts/claude-hud&Date)
