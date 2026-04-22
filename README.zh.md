@@ -4,6 +4,19 @@
 
 支持 Claude Code 订阅会话和**本地模型设置**（Ollama、LMStudio、vLLM 等），通过 OpenAI 兼容 API 接入。
 
+## 与 [jarrodwatts/claude-hud](https://github.com/jarrodwatts/claude-hud) 的区别
+
+| 功能 | 原版 | 本分支 |
+|------|------|--------|
+| 本地模型 API 支持 | 无 | 支持 — 从本地 OpenAI 兼容 API 获取上下文窗口信息 |
+| 上下文回退 | `context_window_size` 缺失时不显示 | 回退使用本地模型的上下文窗口大小 |
+| 本地模型标识 | 无 | 上下文显示中标注 `(本地)` |
+| `display.localApiUrl` 配置 | 无 | 可配置 API 端点（默认 `http://127.0.0.1:8086`） |
+| 安装说明 | Marketplace（`/plugin install`） | 已删除 — 面向直接开发 / 自托管 |
+| CI 工作流 | 有 | 已删除 |
+
+**核心改动**：当 Claude Code 未提供 `context_window_size` 时（本地模型代理常见情况），本分支会查询你的本地 API 获取模型上下文窗口，并用于上下文百分比计算。
+
 ![Claude HUD in action](claude-hud-preview-5-2.png)
 
 > 🌐 [English README](README.md) | 中文文档

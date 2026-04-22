@@ -4,6 +4,19 @@ A Claude Code plugin that displays a real-time multi-line statusline — context
 
 Supports both Claude Code subscriber sessions and **local model setups** (Ollama, LMStudio, vLLM, etc.) via OpenAI-compatible APIs.
 
+## Differences from [jarrodwatts/claude-hud](https://github.com/jarrodwatts/claude-hud)
+
+| Feature | Upstream | This Fork |
+|---------|----------|-----------|
+| Local model API support | No | Yes — fetches context window from local OpenAI-compatible API |
+| Context fallback | Fails when `context_window_size` missing | Falls back to local model's context window |
+| Local model indicator | N/A | Shows `(local)` / `(本地)` in context display |
+| `display.localApiUrl` config | N/A | Configurable API endpoint (default `http://127.0.0.1:8086`) |
+| Install instructions | Marketplace (`/plugin install`) | Removed — for direct development / self-hosting |
+| CI workflows | Yes | Removed |
+
+**Key change**: When Claude Code doesn't provide `context_window_size` (common with local model proxies), this fork queries your local API to get the model's context window and uses it for context percentage calculations.
+
 ![Claude HUD in action](claude-hud-preview-5-2.png)
 
 > 🌐 English | [中文文档](README.zh.md)
